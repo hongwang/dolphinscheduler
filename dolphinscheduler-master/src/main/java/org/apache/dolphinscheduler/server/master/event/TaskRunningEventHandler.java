@@ -30,6 +30,7 @@ import org.apache.dolphinscheduler.server.master.config.MasterConfig;
 import org.apache.dolphinscheduler.server.master.processor.queue.TaskEvent;
 import org.apache.dolphinscheduler.server.master.runner.WorkflowExecuteRunnable;
 import org.apache.dolphinscheduler.server.master.runner.WorkflowExecuteThreadPool;
+import org.apache.dolphinscheduler.server.master.utils.TaskUtils;
 
 import java.util.Optional;
 
@@ -89,7 +90,10 @@ public class TaskRunningEventHandler implements TaskEventHandler {
             if (!taskInstanceDao.updateById(taskInstance)) {
                 throw new TaskEventHandleError("Handle task running event error, update taskInstance to db failed");
             }
-            sendAckToWorker(taskEvent);
+
+            if (!TaskUtils.isMasterTask(taskInstance.getTaskType())) {
+                sendAckToWorker(taskEvent);
+            }
         } catch (Exception ex) {
             TaskInstanceUtils.copyTaskInstance(oldTaskInstance, taskInstance);
             if (ex instanceof TaskEventHandleError) {
